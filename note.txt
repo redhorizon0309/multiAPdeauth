@@ -1,0 +1,9 @@
+###INSTALL
+sudo apt install python3 python3-pip git
+###ADD LIB
+sudo pip install scapy
+###UPDATE
+sudo apt update
+sudo apt upgrade 
+###INSTALL WIRELESS CARD DRIVER
+git clone https://gitlab.com/kalilinux/packages/realtek-rtl8188eus-dkms.git
