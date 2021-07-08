@@ -7,3 +7,6 @@ sudo apt update
 sudo apt upgrade 
 ###INSTALL WIRELESS CARD DRIVER
 git clone https://gitlab.com/kalilinux/packages/realtek-rtl8188eus-dkms.git
+###MCUnode lib
+http://arduino.esp8266.com/stable/package_esp8266com_index.json
+

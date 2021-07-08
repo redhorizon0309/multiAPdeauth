@@ -42,5 +42,30 @@ def keygen(keyname):
         with open('keys/'+keyname+'/public_key.pem', 'wb') as f: f.write(serial_pub)
     else: print("Key existed")
 
+def save_pub_key(key,keyname):
+    # create keys directory
+    if os.path.isdir("keys") == False :
+        os.mkdir("keys",0o666)
+    # create my key
+    if iskey(keyname) == False :
+        os.mkdir("keys/"+keyname+"/",0o666)
+        # public key save
+        serial_pub = key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+        with open('keys/'+keyname+'/public_key.pem', 'wb') as f: f.write(serial_pub)
+    else:
+        print('Key already existed.')
 
-
+def save_pub_key_byte(key_byte,keyname):
+    # create keys directory
+    if os.path.isdir("keys") == False :
+        os.mkdir("keys",0o666)
+    # create my key
+    if iskey(keyname) == False :
+        os.mkdir("keys/"+keyname+"/",0o666)
+        # public key save
+        with open('keys/'+keyname+'/public_key.pem', 'wb') as f: f.write(key_byte)
+    else:
+        print('Key already existed.')

@@ -1,15 +1,52 @@
 
 #!/usr/bin/env python
 
-import sys, os, signal 
+import sys, os, signal, re
 from time import sleep
 from multiprocessing import Process
-
 from scapy.all import *
 
 interface='' # monitor interface
 aps = {} # dictionary to store unique APs
 
+def printAP():
+    with open('APs.txt','r') as aps_list:
+        for line in aps_list:
+            print(line,end = '')
+
+def isAPempty():
+    with open('APs.txt','r') as aps_list:
+        lines = aps_list.readlines()
+        if len(lines) == 0:
+            return 1
+        else:
+            return 0
+
+def isAPsave(bssid):
+    if isAPempty():
+        return 0
+    else:
+        with open('APs.txt','r') as aps_list:
+            hit=0
+            for line in aps_list:
+                if re.search(bssid,line,re.I):
+                    hit += 1
+            if hit == 0 :
+                return 0
+            else :
+                return 1
+
+def storeAP(channel,encrypt,bssid,ssid):
+    if isAPsave(bssid):
+        return
+    else:
+        with open('APs.txt','a') as aps_list:
+            ap = str(channel)+','+str(encrypt)+','+str(bssid)+','+str(ssid)+'\n'
+            aps_list.write(ap)
+
+def clearAP():
+    with open('APs.txt','w') as aps_list:
+        aps_list.truncate(0)
 
 
 # process unique sniffed Beacons and ProbeResponses. 
@@ -24,14 +61,17 @@ def sniffAP(p):
                 {Dot11ProbeResp:%Dot11ProbeResp.cap%}")
 
         # Check for encrypted networks
-        if re.search("privacy", capability): enc = 'Y'
-        else: enc  = 'N'
-
-        # Save discovered AP
-        aps[p[Dot11].addr3] = enc
+        if re.search("privacy", capability): encrypt = 'Y'
+        else: encrypt  = 'N'
 
         # Display discovered AP    
-        print("%02d  %s  %s %s" % (int(channel), enc, bssid, ssid))
+        if not isAPsave(bssid):
+            print("%02d  %s  %s %s" % (int(channel), encrypt, bssid, ssid))
+
+        # Save discovered AP
+        storeAP(channel,encrypt,bssid,ssid)
+
+
 
 # Channel hopper - we are making a channel hopper because we want to scan the whole wireless spectrum.
 #first choose a random channel using randrange function
@@ -51,21 +91,23 @@ def channel_hopper():
             else: channel -=1
         except KeyboardInterrupt:
             break
-            # Capture interrupt signal and cleanup before exiting
+
+# Capture interrupt signal and cleanup before exiting
 #terminate is used to end the child process
 #before exiting the program we will be displaying number of aps found etc.
 #here Cntrl+c is used to 
 #signal_handler used to do clean up before the program exits
+
 def signal_handler(signal, frame):
     p.terminate()
     p.join()
 
-    print("\n-=-=-=-=-=  STATISTICS =-=-=-=-=-=-")
-    print("Total APs found: %d" % len(aps))
-    print("Encrypted APs  : %d" % len([ap for ap in aps if aps[ap] =='Y']))
-    print("Unencrypted APs: %d" % len([ap for ap in aps if aps[ap] =='N']))
+    printAP()
 
+    #clearAP()
     sys.exit(0)
+
+
 #use this for command line variables 
 #for checking the number of command line variables and if they are in right order
 if __name__ == "__main__":
@@ -74,7 +116,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     interface = sys.argv[1]
-#take mon0 as interface given in the fist command line variable
+    #take mon0 as interface given in the fist command line variable
     # Print the program header
     print("-=-=-=-=-=-= scan.py =-=-=-=-=-=-")
     print("CH ENC BSSID             SSID")
@@ -91,3 +133,6 @@ if __name__ == "__main__":
     # Start the sniffer
     sniff(iface=interface,prn=sniffAP)
     #inbuit scapy function to start sniffing calls a function which defines the criteria and we need to give the interface
+
+
+
