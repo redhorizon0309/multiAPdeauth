@@ -9,6 +9,16 @@ from scapy.all import *
 interface='' # monitor interface
 aps = {} # dictionary to store unique APs
 
+def monitor_up(interface):
+    os.system("sudo ifconfig %s down" % (str(interface)))
+    os.system("sudo iwconfig %s mode monitor" % (str(interface)))
+    os.system("sudo ifconfig %s up" % (str(interface)))
+
+def monitor_down(i):
+    os.system("sudo ifconfig %s down" % (str(interface)))
+    os.system("sudo iwconfig %s mode manager" % (str(interface)))
+    os.system("sudo ifconfig %s up" % (str(interface)))
+
 def printAP():
     with open('APs.txt','r') as aps_list:
         for line in aps_list:
@@ -85,7 +95,7 @@ def channel_hopper():
             print("scanning channel %d" %(channel))
             os.system("iw dev %s set channel %d" % (interface, channel))
             time.sleep(1)
-            if (channel == 15): up = False
+            if (channel == 14): up = False
             elif (channel == 1): up = True
             if (up == True): channel +=1
             else: channel -=1
@@ -104,7 +114,7 @@ def signal_handler(signal, frame):
 
     printAP()
 
-    #clearAP()
+
     sys.exit(0)
 
 
@@ -115,24 +125,31 @@ if __name__ == "__main__":
         print("Usage %s monitor_interface" % sys.argv[0])
         sys.exit(1)
 
-    interface = sys.argv[1]
     #take mon0 as interface given in the fist command line variable
-    # Print the program header
-    print("-=-=-=-=-=-= scan.py =-=-=-=-=-=-")
-    print("CH ENC BSSID             SSID")
+    interface = sys.argv[1]
+    
+    # Change network adapter to monitor mode
+    monitor_up(interface)
+    
+    try:
+        # Print the program header
+        print("-=-=-=-=-=-= scan.py =-=-=-=-=-=-")
+        print("CH ENC BSSID             SSID")
 
-    # Start the channel hopper
-    #In multiprocessing, processes are spawned by creating a Process object and then calling its start() method
-    p = Process(target = channel_hopper)
-    p.start()
+        # Start the channel hopper
+        #In multiprocessing, processes are spawned by creating a Process object and then calling its start() method
+        p = Process(target = channel_hopper)
+        p.start()
 
-    # Capture CTRL-C 
-    #this will call the signal handler CTRL+C comes under the SIGINT
-    signal.signal(signal.SIGINT, signal_handler)
+        # Capture CTRL-C 
+        #this will call the signal handler CTRL+C comes under the SIGINT
+        signal.signal(signal.SIGINT, signal_handler)
 
-    # Start the sniffer
-    sniff(iface=interface,prn=sniffAP)
-    #inbuit scapy function to start sniffing calls a function which defines the criteria and we need to give the interface
-
+        # Start the sniffer
+        sniff(iface=interface,prn=sniffAP)
+        #inbuit scapy function to start sniffing calls a function which defines the criteria and we need to give the interface
+    except KeyboardInterrupt:
+        monitor_down(interface)
+        sys.exit(1)
 
 
