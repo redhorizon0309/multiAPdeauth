@@ -97,7 +97,7 @@ def sniffAP(p):
             print("[AP found]: %02d  %s  %s %s" % (int(channel), encrypt, bssid, ssid))
 
         # Save discovered AP
-        AP_append("APs.xml", str(bssid), str(ssid), str(channel), str(encrypt))
+        AP_append(aps_list, str(bssid), str(ssid), str(channel), str(encrypt))
 
 
 
