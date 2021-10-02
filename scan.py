@@ -5,76 +5,8 @@ import xml.etree.ElementTree as ET
 from time import sleep
 from multiprocessing import Process
 from scapy.all import *
-
-aps_list = 'APs.xml'
-interface = '' # monitor interface
-aps = {} # dictionary to store unique APs
-
-def monitor_up(interface):
-    os.system("sudo airmon-ng start %s" % (str(interface)))
-    interface = str(interface+'mon') 
-    return interface
-
-def monitor_down(interface):
-    #print("turn %s to station mode" % (str(interface)))
-    os.system("sudo airmon-ng stop %s" % (str(interface)))
-
-#AP handler
-def padding(length, text):
-    for i in range(0,length):
-        if text[i] == "" :
-            text = text+" "
-             
-def APs_init(fileName):
-    aps = ET.Element('AccessPoints')
-    apsList = ET.ElementTree(aps)
-    with open (fileName, "wb") as files :
-        apsList.write(files)
-
-def AP_exist(fileName, bssid):
-    apsList = ET.parse(fileName)
-    aps = apsList.getroot()
-
-    for ap in aps.findall('AccessPoint'):
-        if ap.findtext('BSSID') == bssid:
-            return 1
-    return 0
-
-def AP_append(fileName, bssid, ssid, channel, encryption):
-    apsList = ET.parse(fileName)
-    aps = apsList.getroot()
-
-    if not AP_exist(fileName, bssid):
-        ap = ET.Element("AccessPoint")
-        ap.set("Channel",channel)
-        ap.set("Encryption",encryption)
-        apBssid = ET.SubElement(ap,"BSSID")
-        apBssid.text = bssid
-        apSsid = ET.SubElement(ap,"SSID")
-        apSsid.text = ssid
-        aps.append(ap)
-        apsList.write(fileName)
-
-def APs_show(fileName):
-    apsList = ET.parse(fileName)
-    aps = apsList.getroot()
-
-    ap_table_header = "|"+"Encryption".ljust(10)+" | "+"Channel".ljust(8)+" | "+"BSSID".ljust(18)+" | "+"SSID".ljust(20)+"|"
-    print("_"*len(str(ap_table_header)))
-    print(ap_table_header)
-    for ap in aps.findall('AccessPoint'):
-        enc = str(ap.get('Encryption')).ljust(10)
-        c = str(ap.get('Channel')).ljust(8)
-        bssid = str(ap.findtext('BSSID')).ljust(18)
-        ssid = str(ap.findtext('SSID')).ljust(20)
-        ap_data = "|"+enc+" | "+c+" | "+bssid+" | "+ssid+"|"
-        print(str(ap_data))
-        
-    print("-"*len(str(ap_table_header)))
-
-def clearAP():
-    with open(aps_list,'w') as aps_list:
-        aps_list.truncate(0)
+from APshandler import *
+from monitormode import *
 
 
 # process unique sniffed Beacons and ProbeResponses. 
@@ -84,7 +16,7 @@ def sniffAP(p):
     if ( (p.haslayer(Dot11Beacon))):
         ssid       = str(p[Dot11Elt].info, 'utf-8')
         bssid      = p[Dot11].addr3    
-        channel    = int( ord(p[Dot11Elt:3].info))
+        channel    = int(ord(p[Dot11Elt:3].info))
         capability = p.sprintf("{Dot11Beacon:%Dot11Beacon.cap%}\
                 {Dot11ProbeResp:%Dot11ProbeResp.cap%}")
 
@@ -93,11 +25,11 @@ def sniffAP(p):
         else: encrypt  = 'N'
 
         # Display discovered AP    
-        if not AP_exist(aps_list,bssid):
+        if not AP_exist(aps_list,str(bssid)):
             print("[AP found]: %02d  %s  %s %s" % (int(channel), encrypt, bssid, ssid))
 
-        # Save discovered AP
-        AP_append(aps_list, str(bssid), str(ssid), str(channel), str(encrypt))
+            # Save discovered AP
+            AP_append(aps_list, str(bssid), str(ssid), str(channel), str(encrypt))
 
 
 
@@ -123,17 +55,17 @@ def channel_hopper():
 # Capture interrupt signal and cleanup before exiting
 #terminate is used to end the child process
 #before exiting the program we will be displaying number of aps found etc.
-#here Cntrl+c is used to 
+#here Ctrl+c is used to 
 #signal_handler used to do clean up before the program exits
 
 def signal_handler(signal, frame):
     p.terminate()
     p.join()
-    
-    monitor_down(interface)
-
+    global interface
+    interface = monitor_down(interface)
+    print("[Interface]: %s" % interface)
     os.system('clear')
-    APs_show(aps_list)
+    target_menu(interface)
     
     sys.exit(0)
 
@@ -165,6 +97,7 @@ if __name__ == "__main__":
         signal.signal(signal.SIGINT, signal_handler)
 
         # Start the sniffer
+        
         sniff(iface=interface,prn=sniffAP)
         #inbuit scapy function to start sniffing calls a function which defines the criteria and we need to give the interface
     except KeyboardInterrupt:
