@@ -64,7 +64,6 @@ def signal_handler(signal, frame):
     global interface
     interface = monitor_down(interface)
     print("[Interface]: %s" % interface)
-    os.system('clear')
     target_menu(interface)
     
     sys.exit(0)
