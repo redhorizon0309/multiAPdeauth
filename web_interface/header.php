@@ -4,15 +4,21 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<meta charset="utf-8">
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=0.8, minimal-ui">
+		<meta name="theme-color" content="#36393E">
+
+		<meta name="description" content="Master Controller">
 		<title>Master Controller</title>
+
 		<link rel="stylesheet" type="text/css" href="style.css">
+		<script src="js/site.js"></script>
 	</head>
-	<body>
+	<body onload="loadLang()">
 	    <nav>
 			<div class="wrapper">
 			<a href="index.php"></a>
-			<ul>
+			<ul class="menu">
 				<li><a href="index.php">Home</a></li>
 				<?php
 					if (isset($_SESSION["name"])){

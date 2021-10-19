@@ -103,16 +103,16 @@ def APs_show(fileName):
     if APs_exist(fileName):
         apsList = get_APs(fileName)
         aps = apsList["aps"]
-        ap_table_header = "|"+"ID".ljust(3)+"|"+"Encryption".ljust(10)+" | "+"Channel".ljust(8)+" | "+"BSSID".ljust(18)+" | "+"SSID".ljust(30)+"|"
+        ap_table_header = "|"+"ID".ljust(3)+" | "+"Channel".ljust(8)+" | "+"BSSID".ljust(18)+" | "+"SSID".ljust(30)+" | "+"Encryption".ljust(20)+"|"
         print("_"*len(str(ap_table_header)))
         print(ap_table_header)
         for i in range(len(aps)):
             apid = str(aps[i][apid_pos]).ljust(3)
-            enc = str(aps[i][encryption_pos]).ljust(10)
+            enc = str(aps[i][encryption_pos]).ljust(20)
             c = str(aps[i][channel_pos]).ljust(8)
             bssid = str(aps[i][bssid_pos]).ljust(18)
             ssid = str(aps[i][ssid_pos]).ljust(30)
-            ap_data = "|"+apid+"|"+enc+" | "+c+" | "+bssid+" | "+ssid+"|"
+            ap_data = "|"+apid+" | "+c+" | "+bssid+" | "+ssid+" | "+enc+"|"
             print(str(ap_data))
         print("|"+"_"*(len(str(ap_table_header))-2)+"|")
         

@@ -21,12 +21,27 @@ def sniffAP(p):
                 {Dot11ProbeResp:%Dot11ProbeResp.cap%}")
 
         # Check for encrypted networks
-        if re.search("privacy", capability): encrypt = 'Y'
-        else: encrypt  = 'N'
-
+        stats = p[Dot11Beacon].network_stats()
+        crypto = stats.get("crypto")
+        if "WPA2/PSK" in crypto and "WPA/PSK" in crypto:
+            encrypt = "WPA2/WPA"
+        elif "WPA2/PSK" in crypto :
+            encrypt = "WPA2"
+        elif "WPA/PSK" in crypto :
+            encrypt = "WPA"
+        elif "WEP" in crypto :
+            encrypt = "WEP"
+        else:
+            encrypt = "N/A"
+            
+        # Check signal strength
+        try:
+            strength = p.dBm_AntSignal
+        except:
+            strength = "N/A"
         # Display discovered AP    
         if not AP_exist(aps_list,str(bssid)):
-            print("[AP found]: %02d  %s  %s %s" % (int(channel), encrypt, bssid, ssid))
+            print("[AP found]: %02d  %s  %s %s %s" % (int(channel), encrypt, bssid, ssid, strength))
 
             # Save discovered AP
             AP_append(aps_list, str(bssid), str(ssid), str(channel), str(encrypt))
