@@ -33,7 +33,7 @@ def sniffAP(p):
             encrypt = "WEP"
         else:
             encrypt = "N/A"
-            
+
         # Check signal strength
         try:
             strength = p.dBm_AntSignal
@@ -44,8 +44,9 @@ def sniffAP(p):
             print("[AP found]: %02d  %s  %s %s %s" % (int(channel), encrypt, bssid, ssid, strength))
 
             # Save discovered AP
-            AP_append(aps_list, str(bssid), str(ssid), str(channel), str(encrypt))
-
+            AP_append(aps_list, str(bssid), str(ssid), str(channel), str(encrypt), str(strength))
+        else:
+            update_strength(aps_list,str(strength),str(bssid))
 
 
 # Channel hopper - we are making a channel hopper because we want to scan the whole wireless spectrum.

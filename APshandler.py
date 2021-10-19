@@ -2,16 +2,16 @@ import json
 import re, sys
 import os.path
 from multideauth import *
+from monitormode import *
 
-apid_pos = 0
+signal_strength_pos = 0
 ssid_pos = 1
 bssid_pos = 2
 channel_pos = 3
 encryption_pos = 4
-
+select_pos = 5
 interface = ''
 aps_list = 'APs.json'
-targets_list = 'targets.json'
 broadcast = 'FF:FF:FF:FF:FF:FF'
 
 #AP handler
@@ -50,36 +50,46 @@ def AP_exist(fileName, bssid):
         apsList = get_APs(fileName)
         aps = apsList["aps"]
         if len(aps) != 0:
-            for i in range(len(aps)):
-                if aps  [i][bssid_pos] == bssid:
+            for apid in range(len(aps)):
+                if aps[apid][bssid_pos] == bssid:
                     return 1
     return 0
 
-def AP_append(fileName, bssid, ssid, channel, encryption):
+def AP_append(fileName, bssid, ssid, channel, encryption, strength):
     if not APs_exist(fileName):
         APs_init(fileName)
 
     apsList = get_APs(fileName)
     aps = apsList["aps"]
-    id = str(len(aps)+1)
-    ap = [id,ssid,bssid,channel,encryption]
+    select = False
+    ap = [strength,ssid,bssid,channel,encryption,select]
     if not AP_exist(fileName,bssid):
         aps.append(ap)
         with open (fileName, "w+") as jsonFile :
             jsonFile.write(json.dumps(apsList))
 
-
-def AP_select(apid,fileName,targetFile):
-    if not APs_exist(targetFile):
-        APs_init(targetFile)
+def update_strength(fileName, strength, bssid):
     if APs_exist(fileName):
         apsList = get_APs(fileName)
         aps = apsList["aps"]
-        found = False
-        for i in range(len(aps)):
-            if apid == aps[i][apid_pos]:
-                found = True
-                AP_append(targetFile,aps[i][bssid_pos],aps[i][ssid_pos],aps[i][channel_pos],aps[i][encryption_pos])
+        for apid in range(len(aps)):
+            if aps[apid][bssid_pos] == bssid:
+                if aps[apid][signal_strength_pos] != strength:
+                    aps[apid][signal_strength_pos] = strength
+                    with open (fileName, "w+") as jsonFile :
+                        jsonFile.write(json.dumps(apsList))
+    else:
+        print('[ERROR]: %s not found' %(fileName))
+
+def AP_select(apid,fileName):
+    if APs_exist(fileName):
+        apsList = get_APs(fileName)
+        aps = apsList["aps"]
+        if apid in range(len(aps)):
+            aps[apid][select_pos] = True
+            with open (fileName, "w+") as jsonFile :
+                jsonFile.write(json.dumps(apsList))
+        else: print('[ERROR]: Invalid ID')
     else:
         print('[ERROR]: %s not found' %(fileName))
 
@@ -87,34 +97,36 @@ def AP_remove(apid,fileName):
     if APs_exist(fileName):
         apsList = get_APs(fileName)
         aps = apsList["aps"]
-        found = False
-        for i in range(len(aps)):
-            if apid == aps[i][apid_pos]:
-                found = True
-                print('[Target list]: Remove AP %s' % (apid))
-                del aps[i]
-                with open (fileName, "w+") as jsonFile :
-                    jsonFile.write(json.dumps(apsList))
-                return
-        if found == False : print('[ERROR]: Invalid ID')
+        if apid in range(len(aps)):
+            aps[apid][select_pos] = False
+            with open (fileName, "w+") as jsonFile :
+                jsonFile.write(json.dumps(apsList))
+        else: print('[ERROR]: Invalid ID')
+    else:
+        print('[ERROR]: %s not found' %(fileName))
+
         
 
 def APs_show(fileName):
     if APs_exist(fileName):
         apsList = get_APs(fileName)
         aps = apsList["aps"]
-        ap_table_header = "|"+"ID".ljust(3)+" | "+"Channel".ljust(8)+" | "+"BSSID".ljust(18)+" | "+"SSID".ljust(30)+" | "+"Encryption".ljust(20)+"|"
+        ap_table_header = "|"+"ID".ljust(3)+" | "+"Signal".ljust(7)+" | "+"Channel".ljust(8)+" | "+"BSSID".ljust(18)+" | "+"SSID".ljust(30)+" | "+"Encryption".ljust(20)+" | |"
         print("_"*len(str(ap_table_header)))
         print(ap_table_header)
         for i in range(len(aps)):
-            apid = str(aps[i][apid_pos]).ljust(3)
+            apid = str(aps[i][signal_strength_pos]).ljust(7)
             enc = str(aps[i][encryption_pos]).ljust(20)
             c = str(aps[i][channel_pos]).ljust(8)
             bssid = str(aps[i][bssid_pos]).ljust(18)
             ssid = str(aps[i][ssid_pos]).ljust(30)
-            ap_data = "|"+apid+" | "+c+" | "+bssid+" | "+ssid+" | "+enc+"|"
+            if aps[i][select_pos] == True:
+                select = " |X"
+            elif aps[i][select_pos] == False: 
+                select = " |O"
+            ap_data = "|"+str(i+1).ljust(3)+" | "+apid+" | "+c+" | "+bssid+" | "+ssid+" | "+enc+select+"|"
             print(str(ap_data))
-        print("|"+"_"*(len(str(ap_table_header))-2)+"|")
+        print("|"+"_"*3+"_|_"+"_"*7+"_|_"+"_"*8+"_|_"+"_"*18+"_|_"+"_"*30+"_|_"+"_"*20+"_|_|")
         
     else:
         print('[ERROR]: %s not found' %(fileName))
@@ -125,57 +137,58 @@ def clear_AP(fileName):
     APs_init(fileName)
 
 def select_target():
-    apid = str(input('[APs list]: Select added AP id: '))
-    AP_select(apid,aps_list,targets_list)
-    target_menu(interface)
+    apid = int(input('[APs list]: Select added AP id: '))-1
+    AP_select(apid,aps_list)
 
 def remove_target():
-    apid = str(input('[Targets list]: Select remove AP id: '))
-    if re.match('^\d+$',apid):
-        AP_remove(apid,targets_list)
-    target_menu(interface)
+    apid = int(input('[Targets list]: Select remove AP id: '))-1
+    AP_remove(apid,aps_list)
 
 def target_menu(interface):
-        os.system('clear')
-        print('[Scanned]:')
-        APs_show(aps_list)
-        print('[Selected]:')
-        APs_show(targets_list)
-        print('[Function]:')
-        print('[1]: Select target')
-        print('[2]: Remove target')
-        print('[3]: Clear targets')
-        print('[4]: Broadcast deauth')
-        print('[5]: Deauth single client')
-        print('[6]: Exit')
-        function = input('[Function]: ')
-        if not re.match('^[1-6]$',function):
-            print('[ERROR]: Invalid Input')
-        else:
-            if function == '1' :
-                select_target()
-            elif function == '2' :
-                remove_target()
-            elif function == '3' :
-                clear_AP(targets_list)
+    os.system('clear')
+    print('[Interface]: %s' %(interface))
+    print('[Scanned]:')
+    APs_show(aps_list)
+    print('[Function]:')
+    print('[1]: Select target')
+    print('[2]: Remove target')
+    print('[3]: Clear targets')
+    print('[4]: Broadcast deauth')
+    print('[5]: Deauth single client')
+    print('[6]: Exit')
+    function = input('[Function]: ')
+    if not re.match('^[1-6]$',function):
+        print('[ERROR]: Invalid Input')
+    else:
+        if function == '1' :
+            select_target()
+            target_menu(interface)
+        elif function == '2' :
+            remove_target()
+            target_menu(interface)
+        elif function == '3' :
+            clear_AP(aps_list)
+            target_menu(interface)
+        elif function == '4':
+            try:
+                interface = monitor_up(interface)
+                print('[Interface]: Deauth on %s' %(interface))
+                multi_deauth(aps_list,interface,broadcast)
+            except KeyboardInterrupt:
+                interface = monitor_down(interface)
+                print('[Deauth]: Stop.')
                 target_menu(interface)
-            elif function == '4':
-                try:                
-                    multi_deauth(targets_list,interface,broadcast)
-                except KeyboardInterrupt:
-                    print('[Deauth]: Stop.')
-                    target_menu(interface)
-            elif function == '5':
-                try:
-                    client_mac = str(input('[Deauth]: Target client`s mac address: '))
-                    if is_mac(client_mac):
-                        multi_deauth(targets_list,interface,client_mac)
-                    else:
-                        print('[ERROR]: Invalid client`s address.')
-                        time.sleep(1)
-                except KeyboardInterrupt:
-                    target_menu(interface)
-            elif function == '6' :
-                sys.exit(0)
-            else:
-                print('[ERROR]: Invalid Input')
+        elif function == '5':
+            try:
+                client_mac = str(input('[Deauth]: Target client`s mac address: '))
+                if is_mac(client_mac):
+                    multi_deauth(aps_list,interface,client_mac)
+                else:
+                    print('[ERROR]: Invalid client`s address.')
+                    time.sleep(1)
+            except KeyboardInterrupt:
+                target_menu(interface)
+        elif function == '6' :
+            sys.exit(0)
+        else:
+            print('[ERROR]: Invalid Input')

