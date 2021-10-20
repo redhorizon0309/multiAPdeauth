@@ -4,13 +4,14 @@
 <?php
 	if (isset($_SESSION["name"])){
         ?>
-        <h1>Command console</h1>
-			<form action="shell.php" method="post">
-				<label for="cmd">Cmd</label>
+		<div class="container">
+        	<h1>Command console</h1>
+			<form action="includes/shell.inc.php" method="post">
+				<label for="cmd">Command</label>
 				<input type="text" id="cmd" name="cmd">
-
 				<input type="submit" value="Submit">
 			</form>
+		</div>
         <?php
 	}
 	else {

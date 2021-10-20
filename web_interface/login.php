@@ -1,17 +1,18 @@
 <?php
 	include_once 'header.php';
 ?>
+			<div class="container">
+				<h1>Login</h1>
+				<form action="includes/login.inc.php" method="post">
+	    		    <label>Name</label>
+	    		    <input type="text" name="name" placeholder="name">
 
-			<form action="includes/login.inc.php" method="post">
-	    	    <label>Name</label>
-	    	    <input type="text" name="name" placeholder="name">
+	    		    <label>Password</label>
+	    		    <input type="text" name="password" placeholder="password">
 
-	    	    <label>Password</label>
-	    	    <input type="text" name="password" placeholder="password">
-
-	    	    <button type="submit" name="submit">Login</button>
-	    	</form>
-
+	    		    <button type="submit" name="submit">Login</button>
+	    		</form>
+			</div>
 			<?php
 if (isset($_GET["error"])) {
 	if ($_GET["error"] == "emptyinput") {
