@@ -1,10 +1,15 @@
 #!/usr/bin/env python
 
-import sys, os, signal, re
+import os
+import re
+import signal
+import sys
 import xml.etree.ElementTree as ET
-from time import sleep
 from multiprocessing import Process
+from time import sleep
+
 from scapy.all import *
+
 from APshandler import *
 from monitormode import *
 
@@ -42,7 +47,6 @@ def sniffAP(p):
         # Display discovered AP    
         if not AP_exist(aps_list,str(bssid)):
             print("[AP found]: %02d  %s  %s %s %s" % (int(channel), encrypt, bssid, ssid, strength))
-
             # Save discovered AP
             AP_append(aps_list, str(bssid), str(ssid), str(channel), str(encrypt), str(strength))
         else:
@@ -68,6 +72,7 @@ def channel_hopper():
         except KeyboardInterrupt:
             break
 
+
 # Capture interrupt signal and cleanup before exiting
 #terminate is used to end the child process
 #before exiting the program we will be displaying number of aps found etc.
@@ -89,8 +94,8 @@ def signal_handler(signal, frame):
 #for checking the number of command line variables and if they are in right order
 if __name__ == "__main__":
     try:
-        if len(sys.argv) != 2:
-            print("[Usage]: %s monitor_interface" % sys.argv[0])
+        if len(sys.argv) != 2 and len(sys.argv) != 3:
+            print("[Usage]: %s monitor_interface cycle" % sys.argv[0])
             sys.exit(1)
 
         #take mon0 as interface given in the fist command line variable
@@ -109,12 +114,30 @@ if __name__ == "__main__":
 
         # Capture CTRL-C 
         #this will call the signal handler CTRL+C comes under the SIGINT
-        signal.signal(signal.SIGINT, signal_handler)
+        if len(sys.argv) == 2:
+            signal.signal(signal.SIGINT, signal_handler)
+            # Start the sniffer
+            sniff(iface=interface,prn=sniffAP)
 
-        # Start the sniffer
-        
-        sniff(iface=interface,prn=sniffAP)
         #inbuit scapy function to start sniffing calls a function which defines the criteria and we need to give the interface
-    except KeyboardInterrupt:
-        print("[Interupt]")
+        if len(sys.argv) == 3:
+            try:
+                cycles = int(sys.argv[2])*13
+                if cycles != 0:
+                    sniff(iface=interface,prn=sniffAP,timeout=cycles)
+            except ValueError:
+                print("[ERROR] Invalid cycle")
+                p.terminate()
+                p.join()
+                interface = monitor_down(interface)
+                sys.exit(1)
+            
+            p.terminate()
+            p.join()
+            interface = monitor_down(interface)
+            APs_show(aps_list)
+            sys.exit(0)
 
+                
+    except KeyboardInterrupt:
+        print("[INTERRUPTED]")

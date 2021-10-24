@@ -112,3 +112,28 @@ function login_user($conn, $name, $pwd) {
         exit();
     }
 }
+
+function runPy($filePath){
+    if (isset($_SESSION["name"])){
+        $result = shell_exec("python3 $filePath");
+        echo "<p>$result</p>";
+    } else {
+        echo "<p>Login first</p>";
+    }
+}
+
+function scan(){
+    $arg = "python3 scan.py wlan0 1";
+    runPy($arg);
+}
+
+
+function multideauth($targetFile,$interface){
+    $arg ="../multideauth.py $targetFile $interface";
+    runPy($arg);
+}
+
+function test(){
+    $result = runPy("../APshandler.py 2 $apid");
+    echo "<p>$result</p>";
+}

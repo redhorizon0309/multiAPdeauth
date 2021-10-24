@@ -193,8 +193,6 @@ def target_menu(interface):
         else:
             print('[ERROR]: Invalid Input')
 
-#use this for command line variables 
-#for checking the number of command line variables and if they are in right order
 if __name__ == "__main__":
     try:
         if len(sys.argv) != 3:
@@ -202,10 +200,12 @@ if __name__ == "__main__":
             print("[Usage]: mode 1 = add; mode 2 = remove")
             sys.exit(1)
 
-        mode = sys.argv[1]
-        apid = int(sys.argv[2])
-
+        mode = int(sys.argv[1])
+        apid = int(sys.argv[2])-1
+        print(mode)
         if mode == 1:
             AP_select(apid,aps_list)
         elif mode == 2:
             AP_remove(apid,aps_list)
+    except:
+        print('[ERROR]: Invalid Input')

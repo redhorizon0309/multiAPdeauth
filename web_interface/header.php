@@ -12,6 +12,7 @@
 		<title>Master Controller</title>
 
 		<link rel="stylesheet" type="text/css" href="style.css">
+		<script src="http://code.jquery.com/jquery-3.3.1.min.js"></script>
 		<script src="js/site.js"></script>
 	</head>
 	<body>
@@ -24,6 +25,7 @@
 					if (isset($_SESSION["name"])){
 						echo "<li><a href=\"adduser.php\">Add User</a></li>";
 						echo "<li><a href=\"scan.php\">Scan</a></li>";
+						echo "<li><a href=\"shell.php\">Shell</a></li>";
 						echo "<li><a href=\"includes/logout.inc.php\">Logout</a></li>";
 					}
 					else {

