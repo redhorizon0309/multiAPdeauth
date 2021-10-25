@@ -10,7 +10,7 @@
                             if(isset($_POST['scan'])) {
                                 $arg = "bash scan.sh";
                                 $result = shell_exec("$arg");
-                            } else if (isset($_POST['deauth'])) {
+                            } else if (isset($_POST['submit'])) {
                                 $count = $_POST['deauth'];
                                 echo "<p>$count</p>";
                                 $arg = "bash deauth.sh $count";
@@ -28,7 +28,7 @@
                         <form method='post'>
                             <button name='scan' type='submit' class='left' value='scan'>Scan</button>
                             <input name='deauth' type='number' class='right'>
-                            <button name='deauth' type='submit' class='right' value='deauth'>Deauth</button>
+                            <button name='submit' type='submit' class='right'>Deauth</button>
                         </form>
                         
                         <h2><span>APs</span>: <span id="apNum"></span></h2>
